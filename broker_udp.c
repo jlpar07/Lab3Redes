@@ -169,7 +169,7 @@ static void registrarsubscriptor(const char *topic, struct sockaddr_in *addr) {
          ip_str, ntohs(addr->sin_port), topic, sub_count);
 }
 
-static void distribute_message(int sub_sock, const char *topic,
+static void mensajedistribuido(int sub_sock, const char *topic,
                                const char *message) {
   char out_buf[TAMANOBUFFER];
   snprintf(out_buf, sizeof(out_buf), "MSG|%s|%s", topic, message);

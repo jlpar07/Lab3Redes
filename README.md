@@ -1,9 +1,9 @@
 # Laboratorio de Redes: Sistema de Publicación/Suscripción (TCP y UDP)
 
 ## 👥 Autores
-Carla González - 202411176
-Valeria Martinez -  202410228
-Jose Luis Parra - 202410271
+-Carla González - 202411176
+-Valeria Martinez -  202410228
+-Jose Luis Parra - 202410271
 
 ## 📌 Descripción del Proyecto
 Este proyecto implementa un sistema distribuido basado en el patrón Arquitectónico de Publicación/Suscripción (Pub/Sub) utilizando sockets en C. 

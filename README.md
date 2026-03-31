@@ -67,14 +67,9 @@ Para que el sistema funcione correctamente, los procesos deben iniciarse en un o
 Junto a este código fuente se adjuntan los archivos de captura `.pcapng` solicitados en la guía:
 - `tcp_pubsub.pcapng`: Muestra el Handshake de 3 vías de TCP, la transferencia de mensajes de la aplicación y el cierre de la conexión.
 - `udp_pubsub.pcapng`: Muestra el intercambio de datagramas UDP independientes sin establecimiento de conexión.
-<<<<<<< HEAD
 (Nota: Las capturas se realizaron sobre la interfaz de red local lo - 127.0.0.1).
-## 📚 Librerías y Dependencias Externas utilizadas para la implementación de TCP
-=======
-*(Nota: Las capturas se realizaron sobre la interfaz de red local `lo` - 127.0.0.1).*
 
 ## 📚 Librerías y Dependencias Externas utilizadas
->>>>>>> 79888b281fb17efe957170e006f1b670828b2b64
 
 Para garantizar la máxima compatibilidad y rendimiento, la implementación de este proyecto se realizó de forma **nativa**, por lo que **no se utilizaron librerías de terceros, frameworks, ni dependencias externas** (tales como ZeroMQ, RabbitMQ o MQTT brokers prefabricados). 
 

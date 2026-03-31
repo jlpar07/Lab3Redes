@@ -53,7 +53,7 @@ Junto a este código fuente se adjuntan los archivos de captura `.pcapng` solici
 - `udp_pubsub.pcapng`: Muestra el intercambio de datagramas UDP independientes sin establecimiento de conexión.
 *(Nota: Las capturas se realizaron sobre la interfaz de red local `lo` - 127.0.0.1).*
 
-## 📚 Librerías y Dependencias Externas utilizadas para la implementación de TCP
+## 📚 Librerías y Dependencias Externas utilizadas
 
 Para garantizar la máxima compatibilidad y rendimiento, la implementación de este proyecto se realizó de forma **nativa**, por lo que **no se utilizaron librerías de terceros, frameworks, ni dependencias externas** (tales como ZeroMQ, RabbitMQ o MQTT brokers prefabricados). 
 

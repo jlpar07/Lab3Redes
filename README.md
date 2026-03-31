@@ -1,4 +1,4 @@
-# Laboratorio de Redes: Sistema de Publicación/Suscripción (TCP y UDP)
+# Laboratorio de Redes: Sistema de Publicación/Suscripción (TCP, UDP y QUIC)
 
 ## 👥 Autores
 - Carla González - 202411176
@@ -9,9 +9,10 @@
 Este proyecto implementa un sistema distribuido basado en el patrón Arquitectónico de Publicación/Suscripción (Pub/Sub) utilizando sockets en C. 
 El sistema cuenta con un **Broker** central que enruta los mensajes, **Publicadores** que envían actualizaciones de partidos de fútbol y **Suscriptores** que se conectan para recibir dichas actualizaciones en tiempo real.
 
-Se incluyen dos versiones completas del sistema:
+Se incluyen tres versiones completas del sistema:
 1. **Versión TCP:** Comunicación orientada a la conexión (garantiza la entrega).
 2. **Versión UDP:** Comunicación mediante datagramas (sin conexión).
+3. **Versión QUIC:** Protocolo personalizado sobre UDP con confirmación de entrega (stop-and-wait) y manejo de retransmisiones por timeout.
 
 ## 🛠️ Requisitos del Sistema
 - Entorno Linux (Ubuntu, Debian, WSL, etc.)
@@ -28,7 +29,12 @@ gcc publisher_tcp.c -o pub_tcp
 
 **Para la versión UDP:**
 gcc broker_udp.c -o broker_udp
-gcc subscriber_udp.c -o sub_udp
+gcc subscriber_udp.c -o sub_ud
+
+**Para la versión QUIC:**
+gcc broker_quic.c -o broker_quic
+gcc subscriber_quic.c -o sub_quic
+gcc publisher_quic.c -o pub_quicp
 gcc publisher_udp.c -o pub_udp
 
 ## 🚀 Instrucciones de Ejecución
@@ -40,7 +46,17 @@ Para que el sistema funcione correctamente, los procesos deben iniciarse en un o
 2. **Terminal 2 (Suscriptor):** `./sub_tcp`
    *(Se conecta al broker y envía el mensaje de suscripción `SUB|topic`).*
 3. **Terminal 3 (Publicador):** `./pub_tcp`
-   *(Se conecta e inicia la transmisión de 10 mensajes con el formato `PUB|topic|mensaje`).*
+   *(Se conecta e inicia la transmisión de 
+
+### Ejecución QUIC (Protocolo Personalizado):
+1. **Terminal 1 (Broker):** `./broker_quic`
+   *(Inicia el servidor en el puerto 8080 esperando suscriptores y publicadores).*
+2. **Terminal 2 (Suscriptor):** `./sub_quic`
+   *(Se conecta al broker y envía solicitud de suscripción (PACKET_SUB), espera mensajes y envía ACK por cada paquete recibido).*
+3. **Terminal 3 (Publicador):** `./pub_quic`
+   *(Se conecta e inicia la transmisión de 10 eventos, esperando confirmación (ACK) de cada paquete antes de pasar al siguiente).*
+
+**Nota sobre QUIC:** A diferencia de UDP simple, QUIC implementa un mecanismo de confirmación de entrega **stop-and-wait**: el publicador retransmite hasta recibir ACK del broker, y el broker retransmite al suscriptor hasta recibir ACK del mismo. Las retransmisiones se gatillan por timeout (2 segundos).10 mensajes con el formato `PUB|topic|mensaje`).*
 
 ### Ejecución UDP:
 1. **Terminal 1 (Broker):** `./broker_udp`
@@ -51,9 +67,14 @@ Para que el sistema funcione correctamente, los procesos deben iniciarse en un o
 Junto a este código fuente se adjuntan los archivos de captura `.pcapng` solicitados en la guía:
 - `tcp_pubsub.pcapng`: Muestra el Handshake de 3 vías de TCP, la transferencia de mensajes de la aplicación y el cierre de la conexión.
 - `udp_pubsub.pcapng`: Muestra el intercambio de datagramas UDP independientes sin establecimiento de conexión.
+<<<<<<< HEAD
+(Nota: Las capturas se realizaron sobre la interfaz de red local lo - 127.0.0.1).
+## 📚 Librerías y Dependencias Externas utilizadas para la implementación de TCP
+=======
 *(Nota: Las capturas se realizaron sobre la interfaz de red local `lo` - 127.0.0.1).*
 
 ## 📚 Librerías y Dependencias Externas utilizadas
+>>>>>>> 79888b281fb17efe957170e006f1b670828b2b64
 
 Para garantizar la máxima compatibilidad y rendimiento, la implementación de este proyecto se realizó de forma **nativa**, por lo que **no se utilizaron librerías de terceros, frameworks, ni dependencias externas** (tales como ZeroMQ, RabbitMQ o MQTT brokers prefabricados). 
 
@@ -80,4 +101,57 @@ A continuación se detalla el uso de cada archivo de cabecera (`header`) importa
 * **`<stdio.h>`**: Utilizada para la interacción por consola (Standard Input/Output) y la construcción dinámica de strings.
   * *Funciones utilizadas:* `printf()` (para imprimir los logs del sistema), `perror()` (para imprimir mensajes descriptivos de error proveídos por el sistema operativo cuando una función de red falla), y `sprintf()` (para empaquetar variables dentro de un string antes de enviarlo por el socket).
 * **`<stdlib.h>`**: Para utilidades generales del sistema y finalización de procesos, como `exit()` en caso de fallos críticos en la creación de los sockets.
+
+## 📚 Librerías y Dependencias Externas utilizadas para la implementación de QUIC
+
+La versión QUIC implementa un **protocolo personalizado sobre UDP** que simula características de confiabilidad similares a TCP, pero manteniendo la característica sin conexión de UDP. Utiliza los mismos headers de POSIX, pero con un enfoque diferente:
+
+### 1. API de Redes y Sockets (POSIX) - Específico para QUIC
+
+* **`<sys/socket.h>`**: Igual que TCP/UDP, pero usado exclusivamente para UDP (SOCK_DGRAM).
+  * *Funciones utilizadas:* `socket()` (crear socket UDP), `bind()` (en broker_quic.c para escuchar), `sendto()` / `recvfrom()` (primitivas UDP de transmisión).
+  * **Diferencia clave:** No se usa `listen()` ni `accept()` (no hay conexión). Todos los mensajes son datagramas independientes.
+
+* **`<netinet/in.h>` y `<arpa/inet.h>`**: Idénticas a TCP/UDP.
+  * *Estructuras y funciones:* `struct sockaddr_in`, `htons()`, `inet_addr()` para configurar direcciones.
+
+* **`<sys/time.h>`**: **EXCLUSIVA DE QUIC** para implementar timeouts de retransmisión.
+  * *Estructura utilizada:* `struct timeval` (para especificar segundos y microsegundos).
+  * *Funciones utilizadas:* `setsockopt()` con `SO_RCVTIMEO` (Receive Timeout) para que `recvfrom()` expire después de `TIMEOUT_SEC` segundos. Si vence el timeout, la función retorna -1 y se retransmite automáticamente.
+  * **Importancia:** Este es el mecanismo central de confiabilidad en QUIC. Permite implementar "stop-and-wait" sin usar threads o callbacks: el publicador simplemente espera a que venza el timeout, imprime un mensaje de retransmisión y reenvía el paquete.
+
+### 2. Estructura de Paquete Personalizado - **EXCLUSIVA DE QUIC**
+
+No está en ninguna librería estándar, se define en el código:
+```c
+typedef struct {
+    int type;                    // PACKET_DATA, PACKET_ACK, or PACKET_SUB
+    int seq_num;                 // Número de secuencia (0, 1, 2, ...)
+    char payload[MAX_PAYLOAD];   // Datos del evento (publicador) o vacío (ACK/SUB)
+} quic_packet;
+```
+
+**Propósito:**
+- **`type`**: Identifica el tipo de mensaje (diferente a TCP/UDP que envían strings como "SUB|topic" o "PUB|topic|mensaje").
+- **`seq_num`**: Asegura que los paquetes lleguen en orden y permite detectar duplicados.
+- **`payload`**: Transporta el contenido del evento.
+
+### 3. Interacción con el Sistema Operativo
+
+* **`<unistd.h>`**: Igual que TCP/UDP.
+  * *Funciones:* `close()` (cerrar sockets), `sleep()` (simular paso del tiempo entre eventos).
+
+### 4. Biblioteca Estándar de C
+
+* **`<string.h>`**: Igual que TCP/UDP.
+  * *Funciones:* `memset()` (inicializar estructura `broker_addr` y `subscriber_addr`), `strcpy()` (copiar payload).
+
+* **`<stdio.h>`**: Igual que TCP/UDP.
+  * *Funciones:* `printf()` para logs del sistema.
+
+* **`<stdlib.h>`**: Similar a TCP/UDP.
+  * *Funciones:* `exit()` en caso de errores críticos.
+
+
+
 
